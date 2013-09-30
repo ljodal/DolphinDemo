@@ -16,6 +16,23 @@
 #define ADAPTER_NUM   1
 #define OFFSET        0
 
+extern "C" {
+    typedef struct {
+        uint32_t size;
+        void *data;
+    } package;
+    sci_callback_action_t  callback(void *arg,
+                                    sci_local_segment_t segment,
+                                    sci_segment_cb_reason_t reason,
+                                    unsigned int nodeId, 
+                                    unsigned int localAdapterNo,
+                                    sci_error_t error) {
+        fprintf(stderr, "Segment callback, reason: %d\n", reason);
+
+        return SCI_CALLBACK_CONTINUE;
+    }
+}
+
 DolphinServer::DolphinServer(uint32_t n, uint32_t r, size_t b): node_id(n), remote_id(r), buffer_size(b) {
     seg_id = (node_id << 15) | remote_id;
 
@@ -35,7 +52,7 @@ bool DolphinServer::setup() {
     }
 
     // Create a segment
-    SCICreateSegment(sd, &seg, seg_id, buffer_size, NO_CALLBACK, NULL, NO_FLAGS, &error);
+    SCICreateSegment(sd, &seg, seg_id, buffer_size, NULL, NULL, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr,"SCICreateSegment failed - Error code 0x%x\n",error);
         return false;
@@ -117,14 +134,15 @@ void DolphinServer::run() {
 
         // Got buffer
         fprintf(stderr, "Received data, \"processing\", done\n");
-        fprintf(stderr, "%s\n", buffer);
-    }
+        package *p = (package *)buffer;
+        fprintf(stderr, "%d bytes\n", p->size);
 
-    // Send interrupt back
-    SCITriggerInterrupt(intr_r, NO_FLAGS, &error);
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr,"SCITriggerInterrup failed - Error code 0x%x\n",error);
-        return;
+        // Send interrupt back
+        SCITriggerInterrupt(intr_r, NO_FLAGS, &error);
+        if (error != SCI_ERR_OK) {
+            fprintf(stderr,"SCITriggerInterrup failed - Error code 0x%x\n",error);
+            return;
+        }
     }
 }
 

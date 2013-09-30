@@ -208,14 +208,16 @@ bool DolphinClient::multicast(uint8_t *data, size_t length) {
         return false;
     }
 
-    for(;;) {
-        SCIWaitForInterrupt(intr, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
-        if (error != SCI_ERR_OK) {
-            printf("\n");
-            fprintf(stderr,"SCIWaitForInterrupt failed - Error code 0x%x\n",error);
-            return false;
-        }
+    fprintf(stderr, "Waiting for interrupt… ");
+
+    SCIWaitForInterrupt(intr, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+    if (error != SCI_ERR_OK) {
+        printf("\n");
+        fprintf(stderr,"SCIWaitForInterrupt failed - Error code 0x%x\n",error);
+        return false;
     }
+
+    fprintf(stderr, "done!\n");
 
     return true;
 }

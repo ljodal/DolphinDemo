@@ -12,6 +12,8 @@
 
 #define ADAPTER_NUM   1
 
+#define BUFSIZE       9000000
+
 DolphinServer *s;
 
 void shutdown(int i) {
@@ -101,7 +103,7 @@ int main(int argc, char **argv) {
     /*
      * Run dolphin
      */
-    s = new DolphinServer(node_id, remote_node, 10);
+    s = new DolphinServer(node_id, remote_node, BUFSIZE);
     s->setup();
     s->connect();
     s->run();

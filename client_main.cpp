@@ -9,15 +9,18 @@
 #include "dolphin-client.hpp"
 
 #define NO_FLAGS      0
-
 #define ADAPTER_NUM   1
+
+#define BUFSIZE       9000000
 
 DolphinClient *c;
 
-typedef struct {
-    uint32_t size;
-    void *data;
-} package;
+extern "C" {
+    typedef struct {
+        uint32_t size;
+        void *data;
+    } package;
+}
 
 void shutdown(int i) {
     c->shutdown();
@@ -106,22 +109,24 @@ int main(int argc, char **argv) {
     /*
      * Run dolphin
      */
-    c = new DolphinClient(node_id, remote_node, 10);
+    c = new DolphinClient(node_id, remote_node, BUFSIZE);
     c->setup();
     c->connect();
 
-#define BUFSIZE 10
     package *p = (package *)malloc(BUFSIZE);
-    p->data = p+sizeof(package);
+    p->data = p+1; // Data starts after the struct
 
     while (!feof(in)) {
         // Read length bytes from file into fileChunk
-        size_t read = fread(p->data, 1, BUFSIZE-sizeof(package), in);
+        size_t read = fread((char *)p->data, 1, BUFSIZE-sizeof(package), in);
         p->size = read;
 
-        printf("Sending i%.*s\n", read, p->data);
+        fprintf(stderr, "Package size: %d\n", sizeof(package));
+        fprintf(stderr, "Data size: %d\n", p->size);
+        fprintf(stderr, "Struct pointer: %x\n", p);
+        fprintf(stderr, "Data pointer: %x\n", p->data);
 
-        c->multicast((uint8_t *)p, read);
+        c->multicast((uint8_t *)p, read+sizeof(package));
     }
 
     free(p);
