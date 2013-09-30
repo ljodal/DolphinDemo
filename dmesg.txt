@@ -1,0 +1,4 @@
+[7320303.328354] dis_ix_ntb: map_get_remote_bar2_address dis-ix-ntb0: Offset exceeds BAR2 LUT aperture size - offset=0x8e8000 size=0x4 bar2_aperture_size=0x800000
+[7320303.328361] IXH Adapter 1 : ma_idtAllocPhysMap failed to map buffer - memHandle = 0x21d0e8000 size = 4 ix_status = 0x16
+[7320303.328364] IXH Adapter 1 : mapSegment - ma_idtAllocPhysMap failed - retval = 0x20000b08
+
