@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
      * Run dolphin
      */
     s = new DolphinServer(node_id, remote_node, BUFSIZE);
-    s->setup()
+    s->setup();
     s->connect();
     s->run();
 

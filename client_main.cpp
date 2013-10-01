@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
      * Run dolphin
      */
     c = new DolphinClient(node_id, remote_node, BUFSIZE);
-    c->setup()
+    c->setup();
     c->connect();
 
     package *p = (package *)malloc(BUFSIZE);

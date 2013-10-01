@@ -53,6 +53,7 @@ bool DolphinServer::setup() {
 
     // Create a segment
     SCICreateSegment(sd, &seg, seg_id, buffer_size, callback, NULL, SCI_FLAG_USE_CALLBACK, &error);
+    //SCICreateSegment(sd, &seg, seg_id, buffer_size, NULL, NULL, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr,"SCICreateSegment failed - Error code 0x%x\n",error);
         return false;
