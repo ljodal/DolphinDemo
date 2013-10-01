@@ -11,7 +11,7 @@
 #define NO_FLAGS      0
 #define ADAPTER_NUM   1
 
-#define BUFSIZE       9000000
+#define BUFSIZE       50
 
 DolphinClient *c;
 
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
      * Run dolphin
      */
     c = new DolphinClient(node_id, remote_node, BUFSIZE);
-    c->setup();
+    c->setup()
     c->connect();
 
     package *p = (package *)malloc(BUFSIZE);

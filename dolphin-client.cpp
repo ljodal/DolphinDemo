@@ -113,11 +113,9 @@ bool DolphinClient::connect() {
                           NO_FLAGS,
                           &error);
 
-        /*
         if (error != SCI_ERR_OK) {
             fprintf(stderr, "SCIConnectSegment failed - error code, 0x%x\n", error);
         }
-        */
         usleep(100000);
     } while (error != SCI_ERR_OK);
 
@@ -131,11 +129,9 @@ bool DolphinClient::connect() {
                             NO_FLAGS,
                             &error);
 
-        /*
         if (error != SCI_ERR_OK) {
             fprintf(stderr, "SCIConnectInterrupt failed - error code 0x%x\n", error);
         }
-        */
         usleep(100000);
     } while (error != SCI_ERR_OK);
 

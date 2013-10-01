@@ -1,6 +1,6 @@
 CC=g++
-INC= -I/opt/dis/include -I/opt/dis/include/dis
-LIB= -L/opt/dis/lib64 -lsisci
+INC= -I/opt/dis/include -I/opt/dis/include/dis -D_REENTRANT
+LIB= -L/opt/dis/lib64 -lsisci -lpthread
 
 all: client server
 
