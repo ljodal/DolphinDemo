@@ -9,7 +9,7 @@
 #include "dolphin-client.hpp"
 
 #define NO_FLAGS      0
-#define ADAPTER_NUM   1
+#define ADAPTER_NUM   0
 
 #define BUFSIZE       50
 

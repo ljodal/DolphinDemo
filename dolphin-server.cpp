@@ -13,7 +13,7 @@
 #define DMA_READY     7
 #define SRV_READY     1
 
-#define ADAPTER_NUM   1
+#define ADAPTER_NUM   0
 #define OFFSET        0
 
 extern "C" {
