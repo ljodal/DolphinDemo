@@ -22,5 +22,11 @@ client: dolphin-client.o client-main.o
 server: dolphin-server.o server-main.o
 	g++ -o server -g dolphin-server.o server-main.o $(LIB) 
 
+filedemo: filereader.hpp filereader.cpp filewriter.hpp filewriter.cpp interface.hpp main.cpp
+	g++ -c -o filereader.o filereader.cpp
+	g++ -c -o filewriter.o filewriter.cpp
+	g++ -c -o main.o main.cpp
+	g++ -o filedemo main.o filereader.o filewriter.o
+
 clean:
 	rm -f *.o client server
