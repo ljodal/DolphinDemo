@@ -7,18 +7,19 @@
 #include "consumer.hpp"
 #include "controller.hpp"
 #include "dolphin-server.hpp"
+#include "FileWriter.hpp"
 
 #define NO_FLAGS      0
 
 #define ADAPTER_NUM   0
 
-#define BUFSIZE       50
-
 DolphinServer *s;
+FileWriter *f;
 
 void shutdown(int i) {
     s->shutdown();
     delete s;
+    delete f;
 
     exit(EXIT_SUCCESS);
 }
@@ -106,8 +107,11 @@ int main(int argc, char **argv) {
     s = new DolphinServer(node_id, remote_node, BUFSIZE);
     s->setup();
     s->connect();
-    s->run();
 
+    f = new FileWriter(output, s);
+    f->run();
+
+    delete f;
     delete s;
 
     return EXIT_FAILURE;

@@ -9,7 +9,7 @@ extern "C" struct resource {
 
 class Interface {
     public:
-        virtual const void *getResource() {};
+        virtual const void *getResource() {return NULL;};
 };
 
 #endif

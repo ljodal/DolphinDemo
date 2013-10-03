@@ -81,7 +81,7 @@ bool DolphinServer::setup() {
     }
 
     // Publish the segment
-    SCISetSegmentAvailable(seg, ADAPTER_NUM, NO_FLAGS, &error);
+    SCISetSegmentAvailable(seg, ADAPTER_NUM, SCI_FLAG_NOTIFY, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr,"SCISetSegmentAvailable failed - Error code 0x%x\n",error);
         return false;
@@ -107,9 +107,11 @@ bool DolphinServer::connect() {
                             NO_FLAGS,
                             &error);
 
+        /*
         if (error != SCI_ERR_OK) {
             fprintf(stderr, "SCIConnectInterrupt failed - error code 0x%x\n", error);
         }
+        */
         usleep(100000);
     } while (error != SCI_ERR_OK);
 
@@ -118,31 +120,31 @@ bool DolphinServer::connect() {
     return true;
 }
 
-void DolphinServer::run() {
+const void *DolphinServer::getResource() {
     sci_error_t error;
 
     fprintf(stderr, "Waiting for incomming data!\n");
 
-    for(;;) {
-        SCIWaitForInterrupt(intr, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
-        if (error != SCI_ERR_OK) {
-            printf("\n");
-            fprintf(stderr,"SCIWaitForInterrupt failed - Error code 0x%x\n",error);
-            return;
-        }
-
-        // Got buffer
-        fprintf(stderr, "Received data, \"processing\", done\n");
-        package *p = (package *)buffer;
-        fprintf(stderr, "%d bytes\n", p->size);
-
-        // Send interrupt back
-        SCITriggerInterrupt(intr_r, NO_FLAGS, &error);
-        if (error != SCI_ERR_OK) {
-            fprintf(stderr,"SCITriggerInterrup failed - Error code 0x%x\n",error);
-            return;
-        }
+    SCIWaitForInterrupt(intr, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+    if (error != SCI_ERR_OK) {
+        printf("\n");
+        fprintf(stderr,"SCIWaitForInterrupt failed - Error code 0x%x\n",error);
+        return NULL;
     }
+
+    void *buf = malloc(BUFSIZE);
+
+    memcpy(buf, (const void *)buffer, BUFSIZE);
+
+    // Send interrupt back
+    SCITriggerInterrupt(intr_r, NO_FLAGS, &error);
+    if (error != SCI_ERR_OK) {
+        fprintf(stderr,"SCITriggerInterrup failed - Error code 0x%x\n",error);
+        return NULL;
+    }
+
+
+    return (const void *)buf;
 }
 
 bool DolphinServer::shutdown() {

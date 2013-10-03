@@ -7,13 +7,13 @@
 #include "consumer.hpp"
 #include "controller.hpp"
 #include "dolphin-client.hpp"
+#include "FileReader.hpp"
 
 #define NO_FLAGS      0
 #define ADAPTER_NUM   0
 
-#define BUFSIZE       50
-
 DolphinClient *c;
+FileReader *f;
 
 extern "C" {
     typedef struct {
@@ -25,6 +25,7 @@ extern "C" {
 void shutdown(int i) {
     c->shutdown();
     delete c;
+    delete f;
 
     // Close all dolphin related resources
     SCITerminate();
@@ -79,14 +80,6 @@ int main(int argc, char **argv) {
     sigaction(SIGINT, &sigIntHandler, NULL);
 
 
-    // Open the file
-    FILE *in = fopen(input, "r");
-
-    // Check that the file is indeed open
-    if (in == NULL) {
-        return EXIT_FAILURE;
-    }
-
     /*
      * Initialize dolphin
      */
@@ -113,28 +106,11 @@ int main(int argc, char **argv) {
     c->setup();
     c->connect();
 
-    package *p = (package *)malloc(BUFSIZE);
-    p->data = p+1; // Data starts after the struct
+    f = new FileReader(input);
 
-    while (!feof(in)) {
-        // Read length bytes from file into fileChunk
-        size_t read = fread((char *)p->data, 1, BUFSIZE-sizeof(package), in);
-        p->size = read;
+    c->run(f);
 
-        fprintf(stderr, "Package size: %d\n", sizeof(package));
-        fprintf(stderr, "Data size: %d\n", p->size);
-        fprintf(stderr, "Struct pointer: %x\n", p);
-        fprintf(stderr, "Data pointer: %x\n", p->data);
 
-        c->multicast((uint8_t *)p, read+sizeof(package));
-    }
-
-    free(p);
-
-    // Close the file
-    fclose(in);
-
-    shutdown(0);
 
     delete c;
 

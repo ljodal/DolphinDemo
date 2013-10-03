@@ -28,7 +28,11 @@ void FileWriter::run() {
         // We've reached the end of the file
         if (buf == NULL) return;
 
-        fwrite(&r[1], 1, r->size, fp);
+        fprintf(stderr, "Writing to file %zu\n", r->size);
+
+        fwrite(((char *)buf)+sizeof(struct resource), r->size, 1, fp);
+
+        fprintf(stderr, "Wrote to file\n");
 
         free((void *)buf);
     };

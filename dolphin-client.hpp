@@ -9,16 +9,17 @@
 #include "sisci_error.h"
 #include "sisci_api.h"
 
-#include "module.hpp"
+#include "interface.hpp"
 #include "dolphin-connection.hpp"
 
-class DolphinClient : public Module {
+class DolphinClient {
     public:
         DolphinClient(uint32_t n, uint32_t r, size_t b);
         bool setup();
         bool connect();
         bool shutdown();
-        bool multicast(uint8_t *data, size_t length);
+        //bool multicast(uint8_t *data, size_t length);
+        bool run(Interface *in);
 
     private:
         uint32_t node_id;

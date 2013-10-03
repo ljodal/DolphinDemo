@@ -5,22 +5,23 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "sisci_error.h"
 #include "sisci_api.h"
 
-#include "module.hpp"
+#include "interface.hpp"
 
 // TODO
 // Remove hardcoded values
 
-class DolphinServer : public Module {
+class DolphinServer : public Interface {
     public:
         DolphinServer(uint32_t n, uint32_t r, size_t b);
         bool setup();
         bool connect();
-        void run();
         bool shutdown();
+        const void *getResource();
 
     private:
         uint32_t node_id;

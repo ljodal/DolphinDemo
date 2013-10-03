@@ -1,6 +1,8 @@
 #ifndef dolphin_connection_hpp
 #define dolphin_connection_hpp
 
+#include <stdint.h>
+
 #include "sisci_error.h"
 #include "sisci_api.h"
 

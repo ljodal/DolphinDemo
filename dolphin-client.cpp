@@ -11,10 +11,11 @@
 #define RECEIVERS     1
 #define OFFSET        0
 
-// Switch DMA interface based on the device
-#ifndef ADAPTER_IS_PSB66
-#define NEW_SISCI_DMA_INTERFACE
-#endif
+sci_callback_action_t callback(void *arg, sci_remote_segment_t segment, sci_segment_cb_reason_t reason, sci_error_t status) {
+    fprintf(stderr, "Callback %d\n", reason);
+
+    return SCI_CALLBACK_CONTINUE;
+}
 
 DolphinClient::DolphinClient(uint32_t n, uint32_t r, size_t b): node_id(n), remote_id(r), buffer_size(b) {
     // Set up interrupt numbers
@@ -69,6 +70,8 @@ bool DolphinClient::setup() {
         fprintf(stderr,"SCICreateInterrupt failed - Error code 0x%x\n",error);
         return false;
     }
+
+    return true;
 }
 
 bool DolphinClient::shutdown() {
@@ -107,15 +110,17 @@ bool DolphinClient::connect() {
                           connection->node_id,
                           connection->seg_id,
                           ADAPTER_NUM,
-                          NO_CALLBACK,
+                          callback,
                           NULL,
                           SCI_INFINITE_TIMEOUT,
-                          NO_FLAGS,
+                          NO_FLAGS | SCI_FLAG_USE_CALLBACK,
                           &error);
 
+        /*
         if (error != SCI_ERR_OK) {
             fprintf(stderr, "SCIConnectSegment failed - error code, 0x%x\n", error);
         }
+        */
         usleep(100000);
     } while (error != SCI_ERR_OK);
 
@@ -129,9 +134,11 @@ bool DolphinClient::connect() {
                             NO_FLAGS,
                             &error);
 
+        /*
         if (error != SCI_ERR_OK) {
             fprintf(stderr, "SCIConnectInterrupt failed - error code 0x%x\n", error);
         }
+        */
         usleep(100000);
     } while (error != SCI_ERR_OK);
 
@@ -140,80 +147,61 @@ bool DolphinClient::connect() {
     return true;
 }
 
-bool DolphinClient::multicast(uint8_t *data, size_t length) {
+bool DolphinClient::run(Interface *in) {
     sci_error_t error;
     sci_dma_queue_state_t dma_queue_state;
 
-    if (length > buffer_size) {
-        fprintf(stderr, "DolphinClient::multicast failed - Data larger than buffer size!\n");
-        fprintf(stderr, "Buffer: %d, length: %d\n", buffer_size, length);
-        return false;
+    for (;;) {
+        struct resource *r = (struct resource *)in->getResource();
+
+        if (r == NULL) {
+            fprintf(stderr, "Reached end of file!\n");
+            return true;
+        }
+
+        // First copy data to the buffer
+        memcpy((void *)buffer, r, r->size+sizeof(struct resource));
+
+        free(r);
+
+        SCIStartDmaTransfer(dma_queue,
+                seg,
+                connection->seg,
+                OFFSET,// Local offset
+                buffer_size,
+                OFFSET, // Remote offset
+                NO_CALLBACK,
+                NULL,
+                NO_FLAGS,
+                &error);
+
+        if (error != SCI_ERR_OK) {
+            fprintf(stderr,"SCIStartDmaTransfer failed - Error code 0x%x\n",error);
+            return false;
+        }
+
+        dma_queue_state = SCIWaitForDMAQueue(dma_queue, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+        if (error != SCI_ERR_OK) {
+            fprintf(stderr,"SCIWaitForDMAQueue failed - Error code 0x%x\n",error);
+            return false;
+        }
+
+        SCITriggerInterrupt(connection->intr, NO_FLAGS, &error);
+        if (error != SCI_ERR_OK) {
+            fprintf(stderr,"SCITriggerInterrup failed - Error code 0x%x\n",error);
+            return false;
+        }
+
+        fprintf(stderr, "Waiting for interrupt... ");
+        SCIWaitForInterrupt(intr, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+        if (error != SCI_ERR_OK) {
+            printf("\n");
+            fprintf(stderr,"SCIWaitForInterrupt failed - Error code 0x%x\n",error);
+            return false;
+        }
+        fprintf(stderr, "Done!\n");
+
     }
-
-    // First copy data to the buffer
-    memcpy((void *)buffer, data, length);
-
-#ifdef NEW_SISCI_DMA_INTERFACE
-    DISStartDmaTransfer(dma_queue,
-            seg,
-            connection->seg,
-            OFFSET,// Local offset
-            buffer_size,
-            OFFSET, // Remote offset
-            NO_CALLBACK,
-            NULL,
-            NO_FLAGS,
-            &error);
-
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr,"DISStartDmaTransfer failed - Error code 0x%x\n",error);
-        return false;
-    }
-
-#else
-    SCIEnqueueDMATransfer(dma_queue, seg, connection->seg, OFFSET, OFFSET, buffer_size, NO_FLAGS, &error);
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr,"SCIEnqueueDMATransfer failed - Error code 0x%x\n",error);
-        return false;
-    }
-
-    SCIPostDMAQueue(dma_queue, NO_CALLBACK, NULL, NO_FLAGS, &error);
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr,"SCIPostDMAQueue failed - Error code 0x%x\n",error);
-        return false;
-    }
-#endif
-
-    dma_queue_state = SCIWaitForDMAQueue(dma_queue, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr,"SCIWaitForDMAQueue failed - Error code 0x%x\n",error);
-        return false;
-    }
-
-#ifndef NEW_SISCI_DMA_INTERFACE
-    SCIResetDMAQueue(dma_queue, NO_FLAGS, &error);
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr,"SCIResetDMAQueue failed - Error code 0x%x\n",error);
-        return false;
-    }
-#endif
-
-    SCITriggerInterrupt(connection->intr, NO_FLAGS, &error);
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr,"SCITriggerInterrup failed - Error code 0x%x\n",error);
-        return false;
-    }
-
-    fprintf(stderr, "Waiting for interrupt… ");
-
-    SCIWaitForInterrupt(intr, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
-    if (error != SCI_ERR_OK) {
-        printf("\n");
-        fprintf(stderr,"SCIWaitForInterrupt failed - Error code 0x%x\n",error);
-        return false;
-    }
-
-    fprintf(stderr, "done!\n");
 
     return true;
 }

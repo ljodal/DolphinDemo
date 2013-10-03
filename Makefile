@@ -13,14 +13,20 @@ server-main.o: server_main.cpp
 dolphin-client.o: dolphin-client.hpp dolphin-client.cpp
 	g++ -g -Wall $(INC) dolphin-client.cpp -c -o dolphin-client.o
 
+filereader.o: FileReader.hpp FileReader.cpp interface.hpp
+	g++ -g -Wall $(INC) FileReader.cpp -c -o filereader.o
+
+filewriter.o: FileWriter.hpp FileWriter.cpp interface.hpp
+	g++ -g -Wall $(INC) FileWriter.cpp -c -o filewriter.o
+
 client-main.o: client_main.cpp
 	g++ -g -Wall $(INC) client_main.cpp -c -o client-main.o
 
-client: dolphin-client.o client-main.o
-	g++ -o client -g dolphin-client.o client-main.o $(LIB)
+client: dolphin-client.o client-main.o filereader.o
+	g++ -o client -g filereader.o dolphin-client.o client-main.o $(LIB)
 	
-server: dolphin-server.o server-main.o
-	g++ -o server -g dolphin-server.o server-main.o $(LIB) 
+server: dolphin-server.o server-main.o filewriter.o
+	g++ -o server -g dolphin-server.o server-main.o filewriter.o $(LIB) 
 
 filedemo: filereader.hpp filereader.cpp filewriter.hpp filewriter.cpp interface.hpp main.cpp
 	g++ -c -o filereader.o filereader.cpp
