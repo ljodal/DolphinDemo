@@ -19,6 +19,11 @@ class CamReaderWrapper : public Interface {
         uint32_t frameRate;
         uint32_t height;
         uint32_t width
+
+        size_t bufferSize;
+
+        std::string timestamp;
+
         MultiMachineReader *reader;
         FrameSetInfo *frameInfo;
 };
